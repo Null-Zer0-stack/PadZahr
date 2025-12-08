@@ -1,0 +1,13 @@
+D:\VS Repo\PadZahr\bin\Debug\PadZahr.exe.config
+D:\VS Repo\PadZahr\bin\Debug\PadZahr.exe
+D:\VS Repo\PadZahr\bin\Debug\PadZahr.pdb
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.csproj.AssemblyReference.cache
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.MainForm.resources
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.Properties.Resources.resources
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.csproj.GenerateResource.cache
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.csproj.CoreCompileInputs.cache
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.exe
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.pdb
+D:\VS Repo\PadZahr\bin\Debug\Process.dll
+D:\VS Repo\PadZahr\obj\Debug\PadZahr.csproj.CopyComplete
+D:\VS Repo\PadZahr\bin\Debug\Blacklist.dll

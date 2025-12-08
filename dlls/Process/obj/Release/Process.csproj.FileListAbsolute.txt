@@ -1,0 +1,6 @@
+D:\VS Repo\Process\bin\Release\Process.dll
+D:\VS Repo\Process\bin\Release\Process.pdb
+D:\VS Repo\Process\obj\Release\Process.csproj.AssemblyReference.cache
+D:\VS Repo\Process\obj\Release\Process.csproj.CoreCompileInputs.cache
+D:\VS Repo\Process\obj\Release\Process.dll
+D:\VS Repo\Process\obj\Release\Process.pdb

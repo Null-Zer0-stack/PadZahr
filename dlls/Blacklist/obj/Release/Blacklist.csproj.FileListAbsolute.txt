@@ -1,0 +1,6 @@
+D:\VS Repo\Blacklist\bin\Release\Blacklist.dll
+D:\VS Repo\Blacklist\bin\Release\Blacklist.pdb
+D:\VS Repo\Blacklist\obj\Release\Blacklist.csproj.AssemblyReference.cache
+D:\VS Repo\Blacklist\obj\Release\Blacklist.csproj.CoreCompileInputs.cache
+D:\VS Repo\Blacklist\obj\Release\Blacklist.dll
+D:\VS Repo\Blacklist\obj\Release\Blacklist.pdb
