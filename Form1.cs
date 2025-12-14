@@ -12,8 +12,13 @@ using Blacklist;
 
 namespace PadZahr
 {
+    
+
     public partial class MainForm : Form
     {
+        private BackGroundProcess _backgroundProcess;
+        private Button CancelButton;
+
         public MainForm()
         {
 
@@ -23,6 +28,19 @@ namespace PadZahr
             MainFormView.View = View.Details;
             MainFormView.Columns.Add("Process Name", 200);
             MainFormView.Columns.Add("PID", 80);
+
+            _backgroundProcess = new BackGroundProcess(3000);
+
+            _backgroundProcess.OnProcessKilled += (name, pid) =>
+            {
+                Invoke(new Action(() =>
+                {
+                    var item = new ListViewItem(name);
+                    item.SubItems.Add(pid.ToString());
+                    MainFormView.Items.Add(item);
+                }));
+            };
+
             LoadProcesses();
         }
 
@@ -53,41 +71,67 @@ namespace PadZahr
             }
         }
 
-        public static List<(string name, uint pid)> ScanAndTerminateBlacklisted()
-        {
-
-            List<(string name, uint pid)> killedList = new List<(string name, uint pid)>();
-
-            var processes = Process.Process.GetProcessList(); // your previous code
-
-            foreach (var (name, pid) in processes)
-            {
-                
-                if (BlackList.Blacklist.Contains(name))
-                {
-                    
-                    bool killed = Process.Process.KillProcess(pid);
-
-                    if (killed)
-                        killedList.Add((name, pid));
-            
-                }
-            }
-
-            return killedList;
-        }
-
         private void ButtonScan_Click(object sender, EventArgs e)
         {
-            var killed = ScanAndTerminateBlacklisted();
+         
+            ButtonScan.Enabled = false; // prevent multiple starts
+            _backgroundProcess.Start();
 
-            MainFormView.Items.Clear();
-            foreach (var (name, pid) in killed)
+           
+
+            if (CancelButton == null)
             {
-                var item = new ListViewItem(name);
-                item.SubItems.Add(pid.ToString());
-                MainFormView.Items.Add(item);
+                CancelButton = new Button();
+                CancelButton.Text = "Cancel";
+                CancelButton.Size = new Size(80, 25);
+
+                CancelButton.BackColor = Color.DarkRed;
+                CancelButton.ForeColor = Color.White;
+                CancelButton.UseVisualStyleBackColor = false;
+
+                CancelButton.FlatStyle = FlatStyle.Flat;
+                CancelButton.FlatAppearance.BorderSize = 0;
+
+                CancelButton.Location = new Point(
+                ButtonScan.Location.X + ButtonScan.Width + 10,
+                ButtonScan.Location.Y
+                );
+                
+                CancelButton.Click += CancelButton_Click;
+
+                this.Controls.Add(CancelButton);
             }
+
+            CancelButton.Visible = true;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            _backgroundProcess = new BackGroundProcess(3000);
+
+            _backgroundProcess.OnProcessKilled += (name, pid) =>
+            {
+                Invoke(new Action(() =>
+                {
+                    var item = new ListViewItem(name);
+                    item.SubItems.Add(pid.ToString());
+                    MainFormView.Items.Add(item);
+                }));
+            };
+        }
+
+
+        private void CancelButton_Click(object sender, EventArgs e)
+        {
+            _backgroundProcess.Stop();
+
+            ButtonScan.Enabled = true;     
+            CancelButton.Visible = false; 
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _backgroundProcess?.Stop();
         }
     }
 }
