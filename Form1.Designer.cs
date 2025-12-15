@@ -97,6 +97,8 @@ namespace PadZahr
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "PadZahr(Real Time Anti-virus)";
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Mouse_Down);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Moveable);
             this.ResumeLayout(false);
 
         }

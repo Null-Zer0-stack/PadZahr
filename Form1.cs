@@ -12,12 +12,13 @@ using Blacklist;
 
 namespace PadZahr
 {
-    
+
 
     public partial class MainForm : Form
     {
         private BackGroundProcess _backgroundProcess;
         private Button CancelButton;
+        public Point Mouse_Loc;
 
         public MainForm()
         {
@@ -73,11 +74,11 @@ namespace PadZahr
 
         private void ButtonScan_Click(object sender, EventArgs e)
         {
-         
+
             ButtonScan.Enabled = false; // prevent multiple starts
             _backgroundProcess.Start();
 
-           
+
 
             if (CancelButton == null)
             {
@@ -96,7 +97,7 @@ namespace PadZahr
                 ButtonScan.Location.X + ButtonScan.Width + 10,
                 ButtonScan.Location.Y
                 );
-                
+
                 CancelButton.Click += CancelButton_Click;
 
                 this.Controls.Add(CancelButton);
@@ -125,13 +126,32 @@ namespace PadZahr
         {
             _backgroundProcess.Stop();
 
-            ButtonScan.Enabled = true;     
-            CancelButton.Visible = false; 
+            ButtonScan.Enabled = true;
+            CancelButton.Visible = false;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             _backgroundProcess?.Stop();
+        }
+
+
+        private void Mouse_Down(object sender, MouseEventArgs e)
+        {
+            Mouse_Loc = new Point(-e.X, -e.Y);
+        }
+
+        private void Moveable(object sender, MouseEventArgs e)
+        {
+
+            if (e.Button == MouseButtons.Left)
+            {
+                Point Mouse_Poistion = Control.MousePosition;
+                Mouse_Poistion.Offset(Mouse_Loc.X, Mouse_Loc.Y);
+                Location = Mouse_Poistion;
+
+            }
+
         }
     }
 }
