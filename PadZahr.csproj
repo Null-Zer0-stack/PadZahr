@@ -51,6 +51,9 @@
   <PropertyGroup>
     <ApplicationIcon>pz_icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <NoWin32Manifest>true</NoWin32Manifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Blacklist">
       <HintPath>dlls\Blacklist.dll</HintPath>

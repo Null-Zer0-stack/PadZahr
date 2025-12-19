@@ -34,6 +34,9 @@ namespace PadZahr
             this.MinimizeButton = new System.Windows.Forms.Button();
             this.MainFormView = new System.Windows.Forms.ListView();
             this.ButtonScan = new System.Windows.Forms.Button();
+            this.PadzahrLabel = new System.Windows.Forms.Label();
+            this.PadZahrPictureBox = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.PadZahrPictureBox)).BeginInit();
             this.SuspendLayout();
             // 
             // CloseButton
@@ -51,7 +54,7 @@ namespace PadZahr
             // 
             // MinimizeButton
             // 
-            this.MinimizeButton.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.MinimizeButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(247)))), ((int)(((byte)(250)))));
             this.MinimizeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.MinimizeButton.Location = new System.Drawing.Point(758, 1);
             this.MinimizeButton.Name = "MinimizeButton";
@@ -82,16 +85,40 @@ namespace PadZahr
             this.ButtonScan.UseVisualStyleBackColor = false;
             this.ButtonScan.Click += new System.EventHandler(this.ButtonScan_Click);
             // 
+            // PadzahrLabel
+            // 
+            this.PadzahrLabel.AutoSize = true;
+            this.PadzahrLabel.BackColor = System.Drawing.Color.White;
+            this.PadzahrLabel.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.PadzahrLabel.Location = new System.Drawing.Point(97, 24);
+            this.PadzahrLabel.Name = "PadzahrLabel";
+            this.PadzahrLabel.Size = new System.Drawing.Size(89, 30);
+            this.PadzahrLabel.TabIndex = 4;
+            this.PadzahrLabel.Text = "PadZahr";
+            // 
+            // PadZahrPictureBox
+            // 
+            this.PadZahrPictureBox.BackColor = System.Drawing.Color.White;
+            this.PadZahrPictureBox.Image = ((System.Drawing.Image)(resources.GetObject("PadZahrPictureBox.Image")));
+            this.PadZahrPictureBox.Location = new System.Drawing.Point(23, 12);
+            this.PadZahrPictureBox.Name = "PadZahrPictureBox";
+            this.PadZahrPictureBox.Size = new System.Drawing.Size(53, 53);
+            this.PadZahrPictureBox.TabIndex = 5;
+            this.PadZahrPictureBox.TabStop = false;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(47)))), ((int)(((byte)(82)))));
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(247)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(875, 464);
+            this.Controls.Add(this.PadZahrPictureBox);
+            this.Controls.Add(this.PadzahrLabel);
             this.Controls.Add(this.ButtonScan);
             this.Controls.Add(this.MainFormView);
             this.Controls.Add(this.MinimizeButton);
             this.Controls.Add(this.CloseButton);
+            this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
@@ -99,7 +126,9 @@ namespace PadZahr
             this.Text = "PadZahr(Real Time Anti-virus)";
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Mouse_Down);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Moveable);
+            ((System.ComponentModel.ISupportInitialize)(this.PadZahrPictureBox)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -109,6 +138,8 @@ namespace PadZahr
         private System.Windows.Forms.Button MinimizeButton;
         private System.Windows.Forms.ListView MainFormView;
         private System.Windows.Forms.Button ButtonScan;
+        private System.Windows.Forms.Label PadzahrLabel;
+        private System.Windows.Forms.PictureBox PadZahrPictureBox;
     }
 }
 
