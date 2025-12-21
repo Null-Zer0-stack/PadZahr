@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Win32;
 using Process;
 using Blacklist;
 
@@ -21,13 +22,23 @@ namespace PadZahr
         public Point Mouse_Loc;
 
 
-        public Panel PanelHeader;
-        public Panel PanelSidebar;
-        public Panel PanelStatus;
+        private Panel PanelHeader;
+        private Panel PanelSidebar;
+        private Panel PanelStatus;
 
-        public Label LabelTitle;
-        public Label LabelStatus;
-        public Label LabelSubtitle;
+        private Label LabelTitle;
+
+
+        
+        private Panel    PanelSettings;
+        private CheckBox CheckStartup;
+        private CheckBox CheckTray;
+
+        private NotifyIcon TrayIcon;
+
+        public const string StartupKey = "";
+        //@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+
 
         public MainForm()
         {
@@ -61,14 +72,20 @@ namespace PadZahr
             this.Controls.Add(PanelSidebar);
 
             /* Status CONTENT */
+            
             PanelStatus = new Panel();
             PanelStatus.Size = new Size(650, 350);
             PanelStatus.BackColor = Color.White;
             PanelStatus.Location = new Point(80, 80);
             PanelStatus.Paint += DrawCardBorder;
 
-            PanelStatus.Controls.Add(CancelButton);
 
+
+
+
+            CreateSettingsPanel();
+
+            
 
 
             var list_process = Process.Process.GetProcessList();
@@ -89,7 +106,7 @@ namespace PadZahr
             };
 
             LoadProcesses();
-            
+            CreateTray();
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -120,36 +137,39 @@ namespace PadZahr
         private void ButtonScan_Click(object sender, EventArgs e)
         {
 
-            ButtonScan.Enabled = false; // prevent multiple starts
+            ButtonScan.Enabled = false;
             _backgroundProcess.Start();
-
-
 
             if (CancelButton == null)
             {
-                CancelButton = new Button();
-                CancelButton.Text = "Cancel";
-                CancelButton.Size = new Size(80, 25);
+                CancelButton = new Button
+                {
+                    Text = "Cancel",
+                    Size = new Size(80, 25),
+                    BackColor = Color.DarkRed,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    UseVisualStyleBackColor = false
+                };
 
-                CancelButton.BackColor = Color.DarkRed;
-                CancelButton.ForeColor = Color.White;
-                CancelButton.UseVisualStyleBackColor = false;
-
-                CancelButton.FlatStyle = FlatStyle.Flat;
                 CancelButton.FlatAppearance.BorderSize = 0;
 
                 CancelButton.Location = new Point(
-                ButtonScan.Location.X + ButtonScan.Width + 10,
-                ButtonScan.Location.Y
+                        ButtonScan.Right + 10,
+                        ButtonScan.Top
                 );
 
                 CancelButton.Click += CancelButton_Click;
 
-                this.Controls.Add(CancelButton);
+
                 
+                ButtonScan.Parent.Controls.Add(CancelButton);
             }
 
             CancelButton.Visible = true;
+            CancelButton.BringToFront();
+
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -179,6 +199,7 @@ namespace PadZahr
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             _backgroundProcess?.Stop();
+            TrayIcon.Visible = false;
         }
 
 
@@ -233,5 +254,88 @@ namespace PadZahr
                 ButtonBorderStyle.Solid
             );
         }
+
+        private void CreateSettingsPanel()
+        {
+            PanelSettings = new Panel
+            {
+                Size = new Size(400, 150),
+                BackColor = Color.White,
+                Location = new Point(240, 100),
+                Visible = false
+            };
+
+            CheckStartup = new CheckBox
+            {
+                Text = "Run app on startup",
+                Location = new Point(20, 30),
+                AutoSize = true,
+                Checked = IsStartupEnabled()
+            };
+            CheckStartup.CheckedChanged += Startup_CheckedChanged;
+
+            CheckTray = new CheckBox
+            {
+                Text = "Minimize to system tray",
+                Location = new Point(20, 65),
+                AutoSize = true,
+                Checked = true
+            };
+
+            PanelSettings.Controls.Add(CheckStartup);
+            PanelSettings.Controls.Add(CheckTray);
+            Controls.Add(PanelSettings);
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+
+            if (CheckTray != null && CheckTray.Checked &&
+                WindowState == FormWindowState.Minimized)
+            {
+                Hide();
+            }
+        }
+
+
+        private void Startup_CheckedChanged(object sender, EventArgs e)
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(StartupKey, true))
+            {
+                if (CheckStartup.Checked)
+                    key.SetValue("PadZahr", Application.ExecutablePath);
+                else
+                    key.DeleteValue("PadZahr", false);
+            }
+        }
+
+        private bool IsStartupEnabled()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(StartupKey))
+            {
+                return key?.GetValue("PadZahr") != null;
+            }
+        }
+
+       
+        private void CreateTray()
+        {
+            TrayIcon = new NotifyIcon
+            {
+                Icon = this.Icon,
+                Text = "PadZahr",
+                Visible = true
+            };
+
+            TrayIcon.DoubleClick += (s, e) =>
+            {
+                Show();
+                WindowState = FormWindowState.Normal;
+            };
+        }
     }
+
+
+    
 }
