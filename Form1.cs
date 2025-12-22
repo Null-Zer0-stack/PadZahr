@@ -66,8 +66,17 @@ namespace PadZahr
             PanelSidebar.Width = 200;
             PanelSidebar.Dock = DockStyle.Left;
             PanelSidebar.BackColor = Color.White;
-            PanelSidebar.Controls.Add(CreateMenuButton("Dashboard", 80, true));
-            PanelSidebar.Controls.Add(CreateMenuButton("Settings", 130, false));
+
+            //PanelSidebar.Controls.Add(CreateMenuButton("Dashboard", 80, true));
+            //PanelSidebar.Controls.Add(CreateMenuButton("Settings", 130, false));
+            Button DashboardButton = CreateMenuButton("Dashboard", 80, true);
+            Button SettingsButton = CreateMenuButton("Settings", 130, false);
+
+            DashboardButton.Click += Dashboard_Click;
+            SettingsButton.Click += Settings_Click;
+
+            PanelSidebar.Controls.Add(DashboardButton);
+            PanelSidebar.Controls.Add(SettingsButton);
 
             this.Controls.Add(PanelSidebar);
 
@@ -257,6 +266,40 @@ namespace PadZahr
 
         private void CreateSettingsPanel()
         {
+            // new implemention  of settings panel
+            PanelSettings = new Panel
+            {
+                Size = MainFormView.Size,
+                Location = MainFormView.Location,
+                BackColor = Color.White,
+                Visible = false
+            };
+
+            CheckStartup = new CheckBox
+            {
+                Text = "Run app on startup",
+                Location = new Point(20, 30),
+                AutoSize = true,
+                Checked = IsStartupEnabled()
+            };
+            CheckStartup.CheckedChanged += Startup_CheckedChanged;
+
+            CheckTray = new CheckBox
+            {
+                Text = "Minimize to system tray",
+                Location = new Point(20, 65),
+                AutoSize = true,
+                Checked = true
+            };
+
+            PanelSettings.Controls.Add(CheckStartup);
+            PanelSettings.Controls.Add(CheckTray);
+
+            Controls.Add(PanelSettings);
+            PanelSettings.BringToFront();
+
+            // old implemention  of settings panel
+            /*
             PanelSettings = new Panel
             {
                 Size = new Size(400, 150),
@@ -296,6 +339,7 @@ namespace PadZahr
             {
                 Hide();
             }
+            */
         }
 
 
@@ -333,6 +377,28 @@ namespace PadZahr
                 Show();
                 WindowState = FormWindowState.Normal;
             };
+        }
+
+        private void Settings_Click(object sender, EventArgs e)
+        {
+            // Hide dashboard controls
+            MainFormView.Visible = false;
+            ButtonScan.Visible = false;
+            CancelButton?.Hide();
+
+            // Show settings controls
+            PanelSettings.Visible = true;
+            PanelSettings.BringToFront();
+        }
+
+        private void Dashboard_Click(object sender, EventArgs e)
+        {
+            // Show dashboard
+            MainFormView.Visible = true;
+            ButtonScan.Visible = true;
+
+            // Hide settings
+            PanelSettings.Visible = false;
         }
     }
 
