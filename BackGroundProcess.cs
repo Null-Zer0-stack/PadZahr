@@ -90,6 +90,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using Microsoft.Win32;
 using Blacklist;
 using Process;
 
@@ -159,6 +161,20 @@ namespace PadZahr
                     }
                 }
             }
+        }
+
+        public /*static*/ void CheckRunKeys()
+        {
+            /*using*/ var key = Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run");
+
+            if (key == null) return;
+
+            foreach (var name in key.GetValueNames())
+            {
+                //Console.WriteLine($"[!] Autorun Entry: {name}");
+                MessageBox.Show("${name}", "Find ${name}");
+            }    
         }
     }
 }

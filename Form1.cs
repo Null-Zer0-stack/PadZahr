@@ -43,7 +43,7 @@ namespace PadZahr
         public MainForm()
         {
 
-            //this.BackColor = ColorTranslator.FromHtml("#111827");
+            
             InitializeComponent();
             /* HEADER CONTENT */
             
@@ -67,8 +67,7 @@ namespace PadZahr
             PanelSidebar.Dock = DockStyle.Left;
             PanelSidebar.BackColor = Color.White;
 
-            //PanelSidebar.Controls.Add(CreateMenuButton("Dashboard", 80, true));
-            //PanelSidebar.Controls.Add(CreateMenuButton("Settings", 130, false));
+
             Button DashboardButton = CreateMenuButton("Dashboard", 80, true);
             Button SettingsButton = CreateMenuButton("Settings", 130, false);
 
@@ -134,6 +133,7 @@ namespace PadZahr
             MainFormView.Items.Clear();
 
             var processes = Process.Process.GetProcessList();
+            _backgroundProcess.CheckRunKeys();
 
             foreach (var (processName, pid) in processes)
             {
@@ -266,7 +266,7 @@ namespace PadZahr
 
         private void CreateSettingsPanel()
         {
-            // new implemention  of settings panel
+            
             PanelSettings = new Panel
             {
                 Size = MainFormView.Size,
@@ -298,48 +298,7 @@ namespace PadZahr
             Controls.Add(PanelSettings);
             PanelSettings.BringToFront();
 
-            // old implemention  of settings panel
-            /*
-            PanelSettings = new Panel
-            {
-                Size = new Size(400, 150),
-                BackColor = Color.White,
-                Location = new Point(240, 100),
-                Visible = false
-            };
-
-            CheckStartup = new CheckBox
-            {
-                Text = "Run app on startup",
-                Location = new Point(20, 30),
-                AutoSize = true,
-                Checked = IsStartupEnabled()
-            };
-            CheckStartup.CheckedChanged += Startup_CheckedChanged;
-
-            CheckTray = new CheckBox
-            {
-                Text = "Minimize to system tray",
-                Location = new Point(20, 65),
-                AutoSize = true,
-                Checked = true
-            };
-
-            PanelSettings.Controls.Add(CheckStartup);
-            PanelSettings.Controls.Add(CheckTray);
-            Controls.Add(PanelSettings);
-        }
-
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-
-            if (CheckTray != null && CheckTray.Checked &&
-                WindowState == FormWindowState.Minimized)
-            {
-                Hide();
-            }
-            */
+            
         }
 
 
