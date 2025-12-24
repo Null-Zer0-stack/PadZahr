@@ -133,7 +133,7 @@ namespace PadZahr
             MainFormView.Items.Clear();
 
             var processes = Process.Process.GetProcessList();
-            _backgroundProcess.CheckRunKeys();
+            
 
             foreach (var (processName, pid) in processes)
             {
@@ -192,6 +192,19 @@ namespace PadZahr
                     var item = new ListViewItem(name);
                     item.SubItems.Add(pid.ToString());
                     MainFormView.Items.Add(item);
+                }));
+            };
+
+            _backgroundProcess.OnAutorunBlocked += name =>
+            {
+                Invoke(new Action(() =>
+                {
+                    MessageBox.Show(
+                        $"Blocked autorun entry: {name}",
+                        "PadZahr",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
                 }));
             };
         }

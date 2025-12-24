@@ -1,4 +1,6 @@
-﻿/*
+﻿// this is old implemention reading process in background
+// i'll keep it here or reading purposes
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -85,6 +87,7 @@ namespace PadZahr
 
 */
 
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -99,24 +102,25 @@ namespace PadZahr
 {
     class BackGroundProcess
     {
+        private readonly int _intervalMs;
         private CancellationTokenSource _cts;
         private Task _workerTask;
-        private readonly int _intervalMs;
 
-        // MEMORY: processes that existed before scan started
-        private readonly HashSet<uint> _knownPids = new HashSet<uint>();
+        // Snapshot of autorun values
+        private readonly Dictionary<string, string> _knownRunEntries =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+
+        public event Action<string> OnAutorunBlocked;
         public event Action<string, uint> OnProcessKilled;
 
-        public BackGroundProcess(int intervalMs = 5000)
+        private const string RunKeyPath =
+            @"Software\Microsoft\Windows\CurrentVersion\Run";
+
+        public BackGroundProcess(int intervalMs = 3000)
         {
             _intervalMs = intervalMs;
-
-            // Snapshot existing processes ONCE
-            foreach (var (_, pid) in Process.Process.GetProcessList())
-            {
-                _knownPids.Add(pid);
-            }
+            SnapshotRunKeys();
         }
 
         public void Start()
@@ -130,7 +134,7 @@ namespace PadZahr
             {
                 while (!_cts.Token.IsCancellationRequested)
                 {
-                    ScanOnce();
+                    ScanRunKeysOnce();
                     await Task.Delay(_intervalMs, _cts.Token);
                 }
             });
@@ -141,40 +145,65 @@ namespace PadZahr
             _cts?.Cancel();
         }
 
-        private void ScanOnce()
+        // -----------------------------
+        // Registry logic
+        // -----------------------------
+
+        private void SnapshotRunKeys()
         {
-            var processes = Process.Process.GetProcessList();
-
-            foreach (var (name, pid) in processes)
-            {
-                // Skip processes we already know
-                if (_knownPids.Contains(pid))
-                    continue;
-
-                _knownPids.Add(pid);
-
-                if (BlackList.Blacklist.Contains(name))
-                {
-                    if (Process.Process.KillProcess(pid))
-                    {
-                        OnProcessKilled?.Invoke(name, pid);
-                    }
-                }
-            }
-        }
-
-        public /*static*/ void CheckRunKeys()
-        {
-            /*using*/ var key = Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Run");
-
+             var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
             if (key == null) return;
 
             foreach (var name in key.GetValueNames())
             {
-                //Console.WriteLine($"[!] Autorun Entry: {name}");
-                MessageBox.Show("${name}", "Find ${name}");
-            }    
+                _knownRunEntries[name] = key.GetValue(name)?.ToString();
+            }
+        }
+
+        private void ScanRunKeysOnce()
+        {
+             var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
+            if (key == null) return;
+
+            foreach (var name in key.GetValueNames())
+            {
+                if (_knownRunEntries.ContainsKey(name))
+                    continue;
+
+                string value = key.GetValue(name)?.ToString();
+                _knownRunEntries[name] = value;
+
+                // Try to kill the process
+                TryKillProcessFromPath(value);
+
+                // Remove autorun
+                key.DeleteValue(name, false);
+
+                OnAutorunBlocked?.Invoke(name);
+            }
+        }
+
+        private void TryKillProcessFromPath(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            string exePath = value.Trim('"');
+
+            foreach (var (procName, pid) in Process.Process.GetProcessList())
+            {
+                try
+                {
+                    if (exePath.EndsWith(procName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (Process.Process.KillProcess(pid))
+                        {
+                            OnProcessKilled?.Invoke(procName, pid);
+                        }
+                    }
+                }
+                catch { }
+            }
         }
     }
 }
