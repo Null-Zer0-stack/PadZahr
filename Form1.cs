@@ -17,9 +17,14 @@ namespace PadZahr
 
     public partial class MainForm : Form
     {
+
+        public Point Mouse_Loc;
+
         private BackGroundProcess _backgroundProcess;
         private Button CancelButton;
-        public Point Mouse_Loc;
+        private Button DashboardButton;
+        private Button SettingsButton;
+        
 
 
         private Panel PanelHeader;
@@ -29,7 +34,6 @@ namespace PadZahr
         private Label LabelTitle;
 
 
-        
         private Panel    PanelSettings;
         private CheckBox CheckStartup;
         private CheckBox CheckTray;
@@ -45,16 +49,22 @@ namespace PadZahr
 
             
             InitializeComponent();
+
+            /* LOAD THE LANGUGAGES */
+            LanguageManager.Load(
+                Properties.Settings.Default.Language ?? "en"
+            );
             /* HEADER CONTENT */
-            
+
             PanelHeader = new Panel();
             PanelHeader.Height = 60;
             PanelHeader.Dock = DockStyle.Top;
             PanelHeader.BackColor = Color.FromArgb(79, 163, 227);
 
             LabelTitle = new Label();
+            //LabelTitle.Text = LanguageManager.T("app.title");
             LabelTitle.ForeColor = Color.White;
-            LabelTitle.Font = new Font("Segoe UI", 14, FontStyle.Bold);
+            //LabelTitle.Font = new Font("Segoe UI", 14, FontStyle.Bold);
             LabelTitle.AutoSize = true;
             LabelTitle.Location = new Point(20, 17);
 
@@ -68,8 +78,11 @@ namespace PadZahr
             PanelSidebar.BackColor = Color.White;
 
 
-            Button DashboardButton = CreateMenuButton("Dashboard", 80, true);
-            Button SettingsButton = CreateMenuButton("Settings", 130, false);
+            Button DashboardButton = CreateMenuButton(LanguageManager.T("menu.dashboard"), 80, true);
+            //CreateMenuButton("Dashboard", 80, true);
+            Button SettingsButton = CreateMenuButton(LanguageManager.T("menu.settings"), 130, false);
+            //ButtonScan.Text = LanguageManager.T("button.scan");
+            //CreateMenuButton("Settings", 130, false);
 
             DashboardButton.Click += Dashboard_Click;
             SettingsButton.Click += Settings_Click;
@@ -93,7 +106,7 @@ namespace PadZahr
 
             CreateSettingsPanel();
 
-            
+           
 
 
             var list_process = Process.Process.GetProcessList();
@@ -115,6 +128,9 @@ namespace PadZahr
 
             LoadProcesses();
             CreateTray();
+
+
+            ApplyLanguage();
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -151,9 +167,11 @@ namespace PadZahr
 
             if (CancelButton == null)
             {
+                
                 CancelButton = new Button
                 {
-                    Text = "Cancel",
+
+                    Text = LanguageManager.T("button.cancel"),
                     Size = new Size(80, 25),
                     BackColor = Color.DarkRed,
                     ForeColor = Color.White,
@@ -161,6 +179,7 @@ namespace PadZahr
                     UseVisualStyleBackColor = false
                 };
 
+               
                 CancelButton.FlatAppearance.BorderSize = 0;
 
                 CancelButton.Location = new Point(
@@ -305,8 +324,36 @@ namespace PadZahr
                 Checked = true
             };
 
+
+
+
             PanelSettings.Controls.Add(CheckStartup);
             PanelSettings.Controls.Add(CheckTray);
+
+            // new
+            ComboBox langBox = new ComboBox
+            {
+                Location = new Point(20, 100),
+                Width = 150,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+
+            langBox.Items.AddRange(new[] { "en", "fa" });
+            // if you want add your language add new .json file and translate it based on english.json file
+            // also add new string in Add Range function like "your desired language"
+            langBox.SelectedItem = LanguageManager.CurrentLanguage;
+
+            langBox.SelectedIndexChanged += (s, e) =>
+            {
+                string lang = langBox.SelectedItem.ToString();
+
+                Properties.Settings.Default.Language = lang;
+                Properties.Settings.Default.Save();
+
+                Application.Restart();
+            };
+
+            PanelSettings.Controls.Add(langBox);
 
             Controls.Add(PanelSettings);
             PanelSettings.BringToFront();
@@ -372,6 +419,59 @@ namespace PadZahr
             // Hide settings
             PanelSettings.Visible = false;
         }
+
+        private void ApplyLanguage()
+        {
+            ButtonScan.Text = LanguageManager.T("button.scan");
+            CheckStartup.Text = LanguageManager.T("settings.startup");
+            CheckTray.Text = LanguageManager.T("settings.tray");
+            
+            
+            if (LanguageManager.CurrentLanguage == "fa")
+            {
+                // uncomment these two lines of code if you want to any RTL language
+                // set to be on right (i wouldn't recommend it,it would break panel) 
+                /*
+                RightToLeft = RightToLeft.Yes;
+                RightToLeftLayout = true;
+                */
+                // Default Persian or any RTL language font
+                Font persianFont = new Font("Tahoma", 9F, FontStyle.Regular);
+
+                ApplyFontRecursive(this, persianFont);
+            }
+            else
+            {
+                // uncomment these two lines of code if you want to any RTL language
+                /*
+                RightToLeft = RightToLeft.No;
+                RightToLeftLayout = false;
+                */
+                // Default English any LTR language font
+                Font englishFont = new Font("Segoe UI", 9F, FontStyle.Regular);
+
+                ApplyFontRecursive(this, englishFont);
+            }
+            
+        }
+
+        private void ButtonChangeToFarsi_Click(object sender, EventArgs e)
+        {
+            LanguageManager.Load("fa");
+            ApplyLanguage();
+        }
+
+        private void ApplyFontRecursive(Control parent, Font font)
+        {
+            parent.Font = font;
+
+            foreach (Control c in parent.Controls)
+            {
+                ApplyFontRecursive(c, font);
+            }
+        }
+   
+   
     }
 
 

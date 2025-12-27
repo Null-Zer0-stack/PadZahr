@@ -16,6 +16,7 @@ namespace PadZahr
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            LanguageManager.Load("en");
             Application.Run(new MainForm());
 
             
