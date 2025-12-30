@@ -42,13 +42,22 @@ namespace PadZahr
 
         public const string StartupKey = "";
         //@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-
+        // change it for to this path if you want actually program runs on startsup !
 
         public MainForm()
         {
 
             
             InitializeComponent();
+
+            try
+            {
+                PadZahr.Security.MalwareBazaarUpdater.UpdateDatabase();
+            }
+            catch
+            {
+               
+            }
 
             /* LOAD THE LANGUGAGES */
             LanguageManager.Load(

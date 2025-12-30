@@ -1,5 +1,5 @@
 ﻿// this is old implemention reading process in background
-// i'll keep it here or reading purposes
+// i'll keep it here or for reading purposes
 /*
 using System;
 using System.Collections.Generic;
@@ -87,16 +87,15 @@ namespace PadZahr
 
 */
 
-
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Microsoft.Win32;
-using Blacklist;
 using Process;
+using Blacklist;
+using PadZahr.Security;
+using System.Diagnostics;
 
 namespace PadZahr
 {
@@ -106,10 +105,12 @@ namespace PadZahr
         private CancellationTokenSource _cts;
         private Task _workerTask;
 
-        // Snapshot of autorun values
-        private readonly Dictionary<string, string> _knownRunEntries =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // MalwareBazaar hash database
+        private HashSet<string> _malwareHashes;
 
+        // Autorun snapshot
+        private readonly Dictionary<string, string> _knownRunEntries =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public event Action<string> OnAutorunBlocked;
         public event Action<string, uint> OnProcessKilled;
@@ -120,6 +121,10 @@ namespace PadZahr
         public BackGroundProcess(int intervalMs = 3000)
         {
             _intervalMs = intervalMs;
+
+            // Load malware hashes from malwarebazar website
+            _malwareHashes = MalwareBazaarUpdater.LoadHashes();
+
             SnapshotRunKeys();
         }
 
@@ -134,10 +139,12 @@ namespace PadZahr
             {
                 while (!_cts.Token.IsCancellationRequested)
                 {
+                    ScanProcesses();
                     ScanRunKeysOnce();
+
                     await Task.Delay(_intervalMs, _cts.Token);
                 }
-            });
+            }, _cts.Token);
         }
 
         public void Stop()
@@ -145,13 +152,55 @@ namespace PadZahr
             _cts?.Cancel();
         }
 
-        // -----------------------------
-        // Registry logic
-        // -----------------------------
+        /*
+         * Process scanning ( name + hash we provided )
+        */ 
+        private void ScanProcesses()
+        {
+            foreach (var proc in System.Diagnostics.Process.GetProcesses())
+            {
+                try
+                {
+                    string processName = proc.ProcessName + ".exe";
+                    uint pid = (uint)proc.Id;
 
+                    // first Name-based blacklist (scans based on my internal blacklist.dll)
+                    if (BlackList.Blacklist.Contains(processName))
+                    {
+                        KillProcess(proc, processName, pid);
+                        continue;
+                    }
+
+                    // second Hash-based detection (MalwareBazaar)
+                    string hash = HashChecker.GetProcessHash(proc);
+                    if (hash != null && _malwareHashes.Contains(hash))
+                    {
+                        KillProcess(proc, processName, pid);
+                    }
+                }
+                catch
+                {
+                   
+                }
+            }
+        }
+
+        private void KillProcess(System.Diagnostics.Process proc, string name, uint pid)
+        {
+            try
+            {
+                proc.Kill();
+                OnProcessKilled?.Invoke(name, pid);
+            }
+            catch { }
+        }
+
+        /* 
+        * Autorun protection
+        */
         private void SnapshotRunKeys()
         {
-             var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
+            var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
             if (key == null) return;
 
             foreach (var name in key.GetValueNames())
@@ -162,7 +211,7 @@ namespace PadZahr
 
         private void ScanRunKeysOnce()
         {
-             var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
+            var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
             if (key == null) return;
 
             foreach (var name in key.GetValueNames())
@@ -173,12 +222,9 @@ namespace PadZahr
                 string value = key.GetValue(name)?.ToString();
                 _knownRunEntries[name] = value;
 
-                // Try to kill the process
                 TryKillProcessFromPath(value);
 
-                // Remove autorun
                 key.DeleteValue(name, false);
-
                 OnAutorunBlocked?.Invoke(name);
             }
         }
@@ -190,16 +236,13 @@ namespace PadZahr
 
             string exePath = value.Trim('"');
 
-            foreach (var (procName, pid) in Process.Process.GetProcessList())
+            foreach (var proc in System.Diagnostics.Process.GetProcesses())
             {
                 try
                 {
-                    if (exePath.EndsWith(procName, StringComparison.OrdinalIgnoreCase))
+                    if (proc.MainModule.FileName.Equals(exePath, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (Process.Process.KillProcess(pid))
-                        {
-                            OnProcessKilled?.Invoke(procName, pid);
-                        }
+                        KillProcess(proc, proc.ProcessName + ".exe", (uint)proc.Id);
                     }
                 }
                 catch { }
