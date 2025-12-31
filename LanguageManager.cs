@@ -37,36 +37,6 @@ namespace PadZahr
                 ? _strings[key]
                 : $"[{key}]";
         }
-        /*
-        private static Dictionary<string, string> _strings =
-            new Dictionary<string, string>();
-
-        public static string CurrentLanguage { get; private set; } = "en";
-
-        public static void Load(string langCode)
-        {
-            
-            string path = Path.Combine(
-                Application.StartupPath,
-                "Languages",
-                $"{langCode}.json"
-            );
-
-            if (!File.Exists(path))
-                throw new FileNotFoundException(path);
-
-            string json = File.ReadAllText(path);
-            _strings = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-
-            CurrentLanguage = langCode;
-        }
-
-        public static string T(string key)
-        {
-            return _strings.TryGetValue(key, out var value)
-                ? value
-                : $"[{key}]";
-        }
-        */
+        
     }
 }

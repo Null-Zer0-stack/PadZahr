@@ -1,5 +1,6 @@
 {
   "menu.dashboard": "Dashboard",
+  "menu.disk_scan": "Disk Scan",
   "menu.settings": "Settings",
   "button.scan": "Scan",
   "button.cancel": "Cancel",

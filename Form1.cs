@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using Process;
 using Blacklist;
+using PadZahr.Security;
 
 namespace PadZahr
 {
@@ -24,17 +25,21 @@ namespace PadZahr
         private Button CancelButton;
         private Button DashboardButton;
         private Button SettingsButton;
-        
 
+
+        private ProgressBar DiskScanProgress;
+        private ListView DiskScanView;
+        private Button ButtonDiskScan;
 
         private Panel PanelHeader;
         private Panel PanelSidebar;
         private Panel PanelStatus;
+        private Panel PanelContent;
 
         private Label LabelTitle;
 
 
-        private Panel    PanelSettings;
+        private Panel PanelSettings;
         private CheckBox CheckStartup;
         private CheckBox CheckTray;
 
@@ -47,8 +52,11 @@ namespace PadZahr
         public MainForm()
         {
 
-            
+
             InitializeComponent();
+            //MainFormView.Parent = PanelContent;
+            //ButtonScan.Parent = PanelContent;
+            PadZahr.Security.MalwareBazaarUpdater.LoadHashes();
 
             try
             {
@@ -56,7 +64,7 @@ namespace PadZahr
             }
             catch
             {
-               
+
             }
 
             /* LOAD THE LANGUGAGES */
@@ -87,24 +95,55 @@ namespace PadZahr
             PanelSidebar.BackColor = Color.White;
 
 
-            Button DashboardButton = CreateMenuButton(LanguageManager.T("menu.dashboard"), 80, true);
-            //CreateMenuButton("Dashboard", 80, true);
-            Button SettingsButton = CreateMenuButton(LanguageManager.T("menu.settings"), 130, false);
-            //ButtonScan.Text = LanguageManager.T("button.scan");
-            //CreateMenuButton("Settings", 130, false);
+            //PanelContent = new Panel();
+            //PanelContent.Location = new Point(200, 60);
+            //PanelContent.Size = new Size(650, 350);
+            //PanelContent.BackColor = Color.Transparent;
 
+
+            PanelContent = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent
+                
+            };
+
+            this.Controls.Add(PanelContent);
+            PanelContent.BringToFront();
+
+            PanelContent.Controls.Add(PanelStatus);
+
+            //PanelContent.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            //this.Controls.Add(PanelContent);
+            //PanelContent.BringToFront();
+
+            Button DashboardButton = CreateMenuButton(LanguageManager.T("menu.dashboard"), 80, true);
+            // creates dashboard button on right side of UI
+            Button DiskScanButton = CreateMenuButton(LanguageManager.T("menu.disk_scan"), 130, false);
+            // creates scan button on right side of UI
+            Button SettingsButton = CreateMenuButton(LanguageManager.T("menu.settings"), 180, false);
+            // creates setting button on right side of UI
             DashboardButton.Click += Dashboard_Click;
+            DiskScanButton.Click += DiskScan_Click;
             SettingsButton.Click += Settings_Click;
 
             PanelSidebar.Controls.Add(DashboardButton);
+            PanelSidebar.Controls.Add(DiskScanButton);
             PanelSidebar.Controls.Add(SettingsButton);
 
             this.Controls.Add(PanelSidebar);
 
             /* Status CONTENT */
-            
+
             PanelStatus = new Panel();
-            PanelStatus.Size = new Size(650, 350);
+             PanelStatus.Size = new Size(650, 350);
+            PanelStatus = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.White,
+                Visible = false
+            };
+            
             PanelStatus.BackColor = Color.White;
             PanelStatus.Location = new Point(80, 80);
             PanelStatus.Paint += DrawCardBorder;
@@ -114,8 +153,8 @@ namespace PadZahr
 
 
             CreateSettingsPanel();
+            CreateDiskScanUI();
 
-           
 
 
             var list_process = Process.Process.GetProcessList();
@@ -140,6 +179,11 @@ namespace PadZahr
 
 
             ApplyLanguage();
+
+            PanelContent.Controls.Add(MainFormView);
+            PanelContent.Controls.Add(ButtonScan);
+            PanelContent.Controls.Add(PanelStatus);
+            PanelContent.Controls.Add(PanelSettings);
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -158,7 +202,7 @@ namespace PadZahr
             MainFormView.Items.Clear();
 
             var processes = Process.Process.GetProcessList();
-            
+
 
             foreach (var (processName, pid) in processes)
             {
@@ -176,7 +220,7 @@ namespace PadZahr
 
             if (CancelButton == null)
             {
-                
+
                 CancelButton = new Button
                 {
 
@@ -188,7 +232,7 @@ namespace PadZahr
                     UseVisualStyleBackColor = false
                 };
 
-               
+
                 CancelButton.FlatAppearance.BorderSize = 0;
 
                 CancelButton.Location = new Point(
@@ -199,7 +243,7 @@ namespace PadZahr
                 CancelButton.Click += CancelButton_Click;
 
 
-                
+
                 ButtonScan.Parent.Controls.Add(CancelButton);
             }
 
@@ -307,7 +351,7 @@ namespace PadZahr
 
         private void CreateSettingsPanel()
         {
-            
+
             PanelSettings = new Panel
             {
                 Size = MainFormView.Size,
@@ -335,11 +379,11 @@ namespace PadZahr
 
 
 
-
+            
             PanelSettings.Controls.Add(CheckStartup);
             PanelSettings.Controls.Add(CheckTray);
 
-            // new
+            
             ComboBox langBox = new ComboBox
             {
                 Location = new Point(20, 100),
@@ -364,10 +408,12 @@ namespace PadZahr
 
             PanelSettings.Controls.Add(langBox);
 
-            Controls.Add(PanelSettings);
-            PanelSettings.BringToFront();
 
-            
+            PanelContent.Controls.Add(PanelSettings);
+            PanelSettings.Dock = DockStyle.Fill;
+            PanelSettings.Visible = false;
+
+
         }
 
 
@@ -390,7 +436,7 @@ namespace PadZahr
             }
         }
 
-       
+
         private void CreateTray()
         {
             TrayIcon = new NotifyIcon
@@ -415,6 +461,7 @@ namespace PadZahr
             CancelButton?.Hide();
 
             // Show settings controls
+            PanelStatus.Visible = false; 
             PanelSettings.Visible = true;
             PanelSettings.BringToFront();
         }
@@ -427,6 +474,7 @@ namespace PadZahr
 
             // Hide settings
             PanelSettings.Visible = false;
+            PanelStatus.Visible = false;
         }
 
         private void ApplyLanguage()
@@ -434,8 +482,8 @@ namespace PadZahr
             ButtonScan.Text = LanguageManager.T("button.scan");
             CheckStartup.Text = LanguageManager.T("settings.startup");
             CheckTray.Text = LanguageManager.T("settings.tray");
-            
-            
+
+
             if (LanguageManager.CurrentLanguage == "fa")
             {
                 // uncomment these two lines of code if you want to any RTL language
@@ -461,7 +509,7 @@ namespace PadZahr
 
                 ApplyFontRecursive(this, englishFont);
             }
-            
+
         }
 
         private void ButtonChangeToFarsi_Click(object sender, EventArgs e)
@@ -479,10 +527,97 @@ namespace PadZahr
                 ApplyFontRecursive(c, font);
             }
         }
-   
-   
+
+
+        private void CreateDiskScanUI()
+        {
+
+
+            ButtonDiskScan = new Button
+            {
+                Text = "Scan Disk",
+                Location = new Point(20, 140),
+                Width = 120
+            };
+            ButtonDiskScan.Click += StartDiskScan;
+
+            DiskScanProgress = new ProgressBar
+            {
+                Location = new Point(20, 180),
+                Width = 400
+            };
+
+            DiskScanView = new ListView
+            {
+                Location = new Point(20, 220),
+                Size = new Size(600, 200),
+                View = View.Details
+            };
+
+
+            DiskScanView.Columns.Add("File", 300);
+            DiskScanView.Columns.Add("Reason", 200);
+            DiskScanView.Columns.Add("Hash", 200);
+
+            PanelStatus.Controls.Add(ButtonDiskScan);
+            PanelStatus.Controls.Add(DiskScanProgress);
+            PanelStatus.Controls.Add(DiskScanView);
+        }
+
+        private async void StartDiskScan(object sender, EventArgs e)
+        {
+
+            DiskScanView.Items.Clear();
+
+            DiskScanProgress.Style = ProgressBarStyle.Blocks;
+            DiskScanProgress.Minimum = 0;
+            DiskScanProgress.Maximum = 100;
+            DiskScanProgress.Value = 0;
+
+            var hashes = PadZahr.Security.MalwareBazaarUpdater.LoadHashes();
+
+            await Task.Run(() =>
+            {
+                var results = DiskScanner.ScanFolder(
+                    "C:\\",
+                    hashes,
+                    progress =>
+                    {
+                        Invoke(new Action(() =>
+                        {
+                            DiskScanProgress.Value = progress.Percent;
+                        }));
+                    });
+
+                Invoke(new Action(() =>
+                {
+                    foreach (var r in results)
+                    {
+                        var item = new ListViewItem(r.FilePath);
+                        item.SubItems.Add(r.Reason);
+                        item.SubItems.Add(r.Hash);
+
+                        item.ForeColor = r.IsMalware
+                            ? Color.Red
+                            : Color.DarkOrange;
+
+                        DiskScanView.Items.Add(item);
+                    }
+                }));
+            });
+
+        }
+
+        private void DiskScan_Click(object sender, EventArgs e)
+        {
+            MainFormView.Visible = false;
+            ButtonScan.Visible = false;
+            PanelSettings.Visible = false;
+
+            PanelStatus.Visible = true;
+            PanelStatus.BringToFront();
+        }
+
     }
 
-
-    
 }
