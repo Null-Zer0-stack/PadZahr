@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 using Microsoft.Win32;
 using Process;
 using Blacklist;
@@ -22,14 +23,20 @@ namespace PadZahr
         public Point Mouse_Loc;
 
         private BackGroundProcess _backgroundProcess;
+
+        private Panel DashboardContainer;
         private Button CancelButton;
         private Button DashboardButton;
         private Button SettingsButton;
 
+        private string SelectedScanPath = "C:\\";
+        private ComboBox DriveSelector; // for Drive selector (C:, D:, E:)
 
+        private Panel DiskScanContainer;
         private ProgressBar DiskScanProgress;
         private ListView DiskScanView;
         private Button ButtonDiskScan;
+        private Button ButtonUpdateDb;
 
         private Panel PanelHeader;
         private Panel PanelSidebar;
@@ -54,18 +61,15 @@ namespace PadZahr
 
 
             InitializeComponent();
+            this.Shown += MainForm_Shown;
+
+
+
+
             //MainFormView.Parent = PanelContent;
             //ButtonScan.Parent = PanelContent;
             PadZahr.Security.MalwareBazaarUpdater.LoadHashes();
 
-            try
-            {
-                PadZahr.Security.MalwareBazaarUpdater.UpdateDatabase();
-            }
-            catch
-            {
-
-            }
 
             /* LOAD THE LANGUGAGES */
             LanguageManager.Load(
@@ -105,13 +109,32 @@ namespace PadZahr
             {
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
-                
             };
-
             this.Controls.Add(PanelContent);
             PanelContent.BringToFront();
 
-            PanelContent.Controls.Add(PanelStatus);
+            DashboardContainer = new Panel
+            {
+                Size = new Size(650, 420),
+                BackColor = Color.Transparent
+            };
+
+            MainFormView.Parent = DashboardContainer;
+            ButtonScan.Parent = DashboardContainer;
+
+            MainFormView.Location = new Point(0, 50);
+            ButtonScan.Location = new Point(0, 0);
+
+
+            PanelContent.Controls.Add(DashboardContainer);
+
+            PanelContent.Resize += (s, e) =>
+            {
+                DashboardContainer.Left = (PanelContent.Width - DashboardContainer.Width) / 2;
+                DashboardContainer.Top = (PanelContent.Height - DashboardContainer.Height) / 2;
+            };
+
+            //PanelContent.Controls.Add(PanelStatus);
 
             //PanelContent.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             //this.Controls.Add(PanelContent);
@@ -134,18 +157,28 @@ namespace PadZahr
             this.Controls.Add(PanelSidebar);
 
             /* Status CONTENT */
-
+            /*
             PanelStatus = new Panel();
-             PanelStatus.Size = new Size(650, 350);
+            PanelStatus.Size = new Size(650, 350);
             PanelStatus = new Panel
             {
                 Dock = DockStyle.Fill,
                 BackColor = Color.White,
                 Visible = false
             };
-            
+            */
+
+            PanelStatus = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.White,
+                Visible = false
+            };
+
+            PanelContent.Controls.Add(PanelStatus);
+
             PanelStatus.BackColor = Color.White;
-            PanelStatus.Location = new Point(80, 80);
+            //PanelStatus.Location = new Point(80, 80);
             PanelStatus.Paint += DrawCardBorder;
 
 
@@ -180,10 +213,7 @@ namespace PadZahr
 
             ApplyLanguage();
 
-            PanelContent.Controls.Add(MainFormView);
-            PanelContent.Controls.Add(ButtonScan);
-            PanelContent.Controls.Add(PanelStatus);
-            PanelContent.Controls.Add(PanelSettings);
+
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -379,11 +409,11 @@ namespace PadZahr
 
 
 
-            
+
             PanelSettings.Controls.Add(CheckStartup);
             PanelSettings.Controls.Add(CheckTray);
 
-            
+
             ComboBox langBox = new ComboBox
             {
                 Location = new Point(20, 100),
@@ -461,7 +491,7 @@ namespace PadZahr
             CancelButton?.Hide();
 
             // Show settings controls
-            PanelStatus.Visible = false; 
+            PanelStatus.Visible = false;
             PanelSettings.Visible = true;
             PanelSettings.BringToFront();
         }
@@ -531,42 +561,82 @@ namespace PadZahr
 
         private void CreateDiskScanUI()
         {
+            DriveSelector = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 100,
+                Location = new Point(0, 0)
+            };
 
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (drive.IsReady)
+                    DriveSelector.Items.Add(drive.Name);
+            }
+
+            DriveSelector.SelectedIndex = 0;
+
+            DriveSelector.SelectedIndexChanged += (s, e) =>
+            {
+                SelectedScanPath = DriveSelector.SelectedItem.ToString();
+            };
+
+            DiskScanContainer = new Panel
+            {
+                Size = new Size(650, 420),
+                BackColor = Color.Transparent
+            };
 
             ButtonDiskScan = new Button
             {
                 Text = "Scan Disk",
-                Location = new Point(20, 140),
+                Location = new Point(0, 0),
                 Width = 120
             };
             ButtonDiskScan.Click += StartDiskScan;
 
+            ButtonUpdateDb = new Button
+            {
+                Text = "Update Database",
+                Location = new Point(ButtonDiskScan.Right + 10, 0),
+                Width = 140
+            };
+            ButtonUpdateDb.Click += UpdateDatabase_Click;
+
             DiskScanProgress = new ProgressBar
             {
-                Location = new Point(20, 180),
+                Location = new Point(0, 40),
                 Width = 400
             };
 
             DiskScanView = new ListView
             {
-                Location = new Point(20, 220),
-                Size = new Size(600, 200),
+                Location = new Point(0, 80),
+                Size = new Size(650, 300),
                 View = View.Details
             };
-
 
             DiskScanView.Columns.Add("File", 300);
             DiskScanView.Columns.Add("Reason", 200);
             DiskScanView.Columns.Add("Hash", 200);
 
-            PanelStatus.Controls.Add(ButtonDiskScan);
-            PanelStatus.Controls.Add(DiskScanProgress);
-            PanelStatus.Controls.Add(DiskScanView);
+            DiskScanContainer.Controls.Add(ButtonDiskScan);
+            DiskScanContainer.Controls.Add(ButtonUpdateDb);
+            DiskScanContainer.Controls.Add(DiskScanProgress);
+            DiskScanContainer.Controls.Add(DiskScanView);
+
+            PanelStatus.Controls.Add(DiskScanContainer);
+
+
+            PanelStatus.Resize += (s, e) =>
+            {
+                DiskScanContainer.Left = (PanelStatus.Width - DiskScanContainer.Width) / 2;
+                DiskScanContainer.Top = (PanelStatus.Height - DiskScanContainer.Height) / 2;
+            };
         }
 
         private async void StartDiskScan(object sender, EventArgs e)
         {
-
             DiskScanView.Items.Clear();
 
             DiskScanProgress.Style = ProgressBarStyle.Blocks;
@@ -574,19 +644,24 @@ namespace PadZahr
             DiskScanProgress.Maximum = 100;
             DiskScanProgress.Value = 0;
 
-            var hashes = PadZahr.Security.MalwareBazaarUpdater.LoadHashes();
+            this.Text = "PadZahr — Scanning: " + SelectedScanPath;
+
+            var hashes = MalwareBazaarUpdater.LoadHashes();
 
             await Task.Run(() =>
             {
                 var results = DiskScanner.ScanFolder(
-                    "C:\\",
+                    SelectedScanPath,
                     hashes,
                     progress =>
                     {
-                        Invoke(new Action(() =>
+                        if (progress.Percent >= 0 && progress.Percent <= 100)
                         {
-                            DiskScanProgress.Value = progress.Percent;
-                        }));
+                            Invoke(new Action(() =>
+                            {
+                                DiskScanProgress.Value = progress.Percent;
+                            }));
+                        }
                     });
 
                 Invoke(new Action(() =>
@@ -597,12 +672,11 @@ namespace PadZahr
                         item.SubItems.Add(r.Reason);
                         item.SubItems.Add(r.Hash);
 
-                        item.ForeColor = r.IsMalware
-                            ? Color.Red
-                            : Color.DarkOrange;
-
+                        item.ForeColor = r.IsMalware ? Color.Red : Color.DarkOrange;
                         DiskScanView.Items.Add(item);
                     }
+
+                    this.Text = "PadZahr";
                 }));
             });
 
@@ -618,6 +692,54 @@ namespace PadZahr
             PanelStatus.BringToFront();
         }
 
+        private async void UpdateDatabase_Click(object sender, EventArgs e)
+        {
+            ButtonUpdateDb.Enabled = false;
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    MalwareBazaarUpdater.UpdateDatabase();
+                });
+
+                MessageBox.Show(
+                    "Malware database updated successfully.",
+                    "PadZahr",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Update failed:\n" + ex.Message,
+                    "PadZahr",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+            finally
+            {
+                ButtonUpdateDb.Enabled = true;
+            }
+        }
+
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            if (!MalwareBazaarUpdater.IsUpdateRecommended())
+                return;
+
+            var r = MessageBox.Show(
+                "A new malware database update is available.\nDo you want to download it now?",
+                "PadZahr",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (r == DialogResult.Yes)
+                UpdateDatabase_Click(null, null);
+        }
     }
 
 }
